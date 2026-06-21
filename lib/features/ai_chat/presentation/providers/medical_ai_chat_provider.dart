@@ -23,9 +23,10 @@ class MedicalAiChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void clearMessages() {
+  Future<void> clearMessages() async {
     messages.clear();
     error = null;
+    await repository.clearMessages();
     notifyListeners();
   }
 
@@ -80,5 +81,9 @@ class MedicalAiChatProvider extends ChangeNotifier {
 
   Future<void> _addUser(String content) async => _add(AiChatMessage(id: DateTime.now().microsecondsSinceEpoch.toString(), content: content, isUser: true, createdAt: DateTime.now()));
   Future<void> _addBot(String content) async => _add(AiChatMessage(id: DateTime.now().microsecondsSinceEpoch.toString(), content: content, isUser: false, createdAt: DateTime.now()));
-  Future<void> _add(AiChatMessage msg) async { messages.add(msg); notifyListeners(); await repository.saveMessage(msg); }
+  Future<void> _add(AiChatMessage msg) async {
+    messages.add(msg);
+    notifyListeners();
+    await repository.saveMessage(msg);
+  }
 }

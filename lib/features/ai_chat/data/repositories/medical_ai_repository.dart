@@ -35,6 +35,26 @@ class MedicalAiRepository {
     return uid == null ? 'medical_ai_chat_history_guest' : 'medical_ai_chat_history_$uid';
   }
 
+
+  Future<void> clearMessages() async {
+    final uid = auth.currentUser?.uid;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_historyKey);
+
+    if (uid == null) return;
+    final snapshot = await firestore
+        .collection('users')
+        .doc(uid)
+        .collection('medical_ai_chats')
+        .limit(200)
+        .get();
+    final batch = firestore.batch();
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
+  }
+
   Future<void> saveMessage(AiChatMessage message) async {
     final uid = auth.currentUser?.uid;
     final prefs = await SharedPreferences.getInstance();

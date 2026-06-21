@@ -5,6 +5,7 @@ import 'package:digl/core/config/medical_theme.dart';
 import 'package:digl/core/config/theme_provider.dart';
 import 'package:digl/core/config/theme_helper.dart';
 import 'package:digl/core/widgets/premium_ui.dart';
+import 'package:digl/features/ai_chat/presentation/medical_ai_chat_launcher.dart';
 import 'package:digl/services/user_role_service.dart';
 import 'package:digl/services/logout_service.dart';
 import 'package:digl/features/settings/presentation/pages/health_assessment_screen.dart';
@@ -426,7 +427,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               subtitle: const Text('افتح محادثة AI لتحليل حالتك وبناء سياق طبي ذكي'),
               trailing: const Icon(Icons.arrow_forward_ios, size: 16),
               onTap: () {
-                Navigator.of(context).pushNamed('/medical_ai_chat');
+                MedicalAiChatLauncher.open(context);
               },
             ),
           ],
