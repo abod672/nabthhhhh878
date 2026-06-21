@@ -22,7 +22,7 @@ class MedicalAiApiService {
   );
   static const String _openRouterModel = String.fromEnvironment(
     'OPENROUTER_MODEL',
-    defaultValue: 'openrouter/free',
+    defaultValue: 'google/gemini-2.0-flash-exp:free',
   );
 
   final Dio _dio;
@@ -52,9 +52,6 @@ class MedicalAiApiService {
     final configuredUrl = (baseUrl ?? '').trim();
     final key = (apiKey ?? '').trim();
 
-    _debug('Gemini Key Exists: ${key.isNotEmpty}');
-    _debug('Gemini Key Length: ${key.length}');
-
     final openRouterKey = _openRouterApiKey.trim();
     final useOpenRouter = _aiProvider.trim().toLowerCase() == 'openrouter' ||
         (key.isEmpty && openRouterKey.isNotEmpty);
@@ -82,7 +79,7 @@ class MedicalAiApiService {
     }
 
     if (key.isEmpty) {
-      return 'لم يتم ضبط مفتاح الذكاء الاصطناعي. لتشغيل Gemini استخدم --dart-define=GEMINI_API_KEY=YOUR_KEY، أو لتشغيل OpenRouter المجاني استخدم --dart-define=AI_PROVIDER=openrouter --dart-define=OPENROUTER_API_KEY=YOUR_KEY. لا يحتاج الذكاء الاصطناعي إلى NEWS_API_KEY.';
+      return 'لم يتم ضبط مفتاح Gemini. أنشئ مفتاحاً من Google AI Studio ثم شغّل التطبيق باستخدام: flutter run --dart-define=GEMINI_API_KEY=YOUR_KEY. لا تحفظ المفتاح داخل Git أو Firebase options.';
     }
 
     final geminiUrl =
@@ -287,18 +284,6 @@ class MedicalAiApiService {
         googleMessage: googleMessage,
         fallbackMessage: e.message,
       );
-    }
-    if (statusCode == 404) {
-      return 'رابط أو نموذج Gemini غير موجود برمز 404. السبب الفعلي: ${googleMessage.isNotEmpty ? googleMessage : e.message}. النموذج الحالي: $model.';
-    }
-    if (statusCode == 429) {
-      return 'تم تجاوز حد طلبات Gemini برمز 429. السبب الفعلي: ${googleMessage.isNotEmpty ? googleMessage : e.message}.';
-    }
-    if (statusCode != null && statusCode >= 500) {
-      return 'خطأ من خوادم $serviceName برمز $statusCode. السبب الفعلي: ${googleMessage.isNotEmpty ? googleMessage : e.message}.';
-    }
-    if (statusCode == 400) {
-      return 'رفضت Google تنسيق طلب Gemini برمز 400. السبب الفعلي: ${googleMessage.isNotEmpty ? googleMessage : e.message}.';
     }
     if (statusCode == 404) {
       return 'رابط أو نموذج Gemini غير موجود برمز 404. السبب الفعلي: ${googleMessage.isNotEmpty ? googleMessage : e.message}. النموذج الحالي: $model.';
