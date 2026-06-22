@@ -447,7 +447,7 @@ class _Composer extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          border: Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: .55))),
+          border: Border(top: BorderSide(color: colorScheme.outlineVariant.withOpacity(.55))),
         ),
         child: Row(
           children: [
@@ -464,7 +464,7 @@ class _Composer extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: 'اكتب سؤالك...',
                   filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest,
+                  fillColor: colorScheme.surface,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                 ),

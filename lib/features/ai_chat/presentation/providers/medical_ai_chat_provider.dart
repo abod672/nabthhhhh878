@@ -1,3 +1,4 @@
+import 'package:digl/features/ai_chat/presentation/pages/medical_ai_chat_screen.dart';
 import 'package:flutter/material.dart';
 import '../../data/models/ai_chat_message.dart';
 import '../../data/models/medical_intake.dart';
@@ -70,7 +71,7 @@ class MedicalAiChatProvider extends ChangeNotifier {
 
   Future<void> sendAttachment(MedicalIntake intake, String path, String type) async {
     final label = type == 'image'
-        ? 'تم رفع صورة للتحليل. حلل الصورة: إن كانت فحصاً أو تحليلاً فاستخرج القيم المقروءة واشرحها، وإن كانت دواءً فحاول تحديد اسمه واستخدامه والتحذيرات العامة.'
+        ? 'تم رفع صورة للتحليل. افحص الصورة نفسها: إن كانت فحصاً أو تحليلاً فاستخرج النصوص والقيم المقروءة واشرحها، وإن كانت دواءً فحدد الاسم الظاهر أو الأقرب والاستخدام والتحذيرات العامة.'
         : 'تم رفع ملف للمراجعة';
     await _add(AiChatMessage(id: DateTime.now().microsecondsSinceEpoch.toString(), content: label, isUser: true, createdAt: DateTime.now(), attachmentPath: path, attachmentType: type));
     isLoading = true; error = null; notifyListeners();
@@ -85,6 +86,27 @@ class MedicalAiChatProvider extends ChangeNotifier {
       await _addBot(reply.isEmpty ? 'تم استلام المرفق. صف لي ما تريد تحليله بالتحديد.' : reply);
     } catch (e) { error = 'تعذر تحليل المرفق: $e'; }
     finally { isLoading = false; notifyListeners(); }
+  }
+
+
+  static Future<void> open(BuildContext context) {
+    return Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const MedicalAiChatScreen(),
+        settings: const RouteSettings(name: '/medical_ai_chat'),
+      ),
+    );
+  }
+
+  static Widget floatingButton(BuildContext context) {
+    return FloatingActionButton.extended(
+      heroTag: 'global_ai_chat_fab',
+      elevation: 0,
+      highlightElevation: 0,
+      onPressed: () => open(context),
+      icon: const Icon(Icons.smart_toy_rounded),
+      label: const Text('مساعدك الشخصي'),
+    );
   }
 
   Future<void> _addUser(String content) async => _add(AiChatMessage(id: DateTime.now().microsecondsSinceEpoch.toString(), content: content, isUser: true, createdAt: DateTime.now()));

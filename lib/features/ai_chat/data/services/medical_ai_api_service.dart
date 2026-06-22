@@ -92,13 +92,12 @@ class MedicalAiApiService {
     final geminiUrl =
         'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent';
     final promptText = _buildMedicalPrompt(intake, history, message, attachmentType);
-    final parts = <Map<String, dynamic>>[
-      {'text': promptText},
-    ];
+    final parts = <Map<String, dynamic>>[];
     final inlineImage = await _buildGeminiInlineImage(attachmentPath, attachmentType);
     if (inlineImage != null) {
       parts.add(inlineImage);
     }
+    parts.add({'text': promptText});
 
     final payload = {
       'systemInstruction': {
@@ -267,7 +266,7 @@ class MedicalAiApiService {
     final hasImage = attachmentType == 'image';
     return 'بيانات الحالة:\n${intake.toPrompt()}\n\n'
         'سجل مختصر:\n${history.map((e) => '${e.isUser ? 'المستخدم' : 'المساعد'}: ${e.content}').join('\n')}\n\n'
-        '${hasImage ? 'الصورة المرفقة قد تكون صورة فحص/تحاليل/أشعة/دواء. حلل ما يظهر بصرياً فقط، واستخرج النصوص أو القيم المقروءة إن وجدت، واشرح ماذا قد تعني بشكل عام، واذكر متى يجب مراجعة طبيب أو صيدلي. لا تخترع قيماً غير واضحة ولا تقدم تشخيصاً نهائياً.\n\n' : ''}'
+        '${hasImage ? 'مهمة الصورة: لا تعتذر بأنك لا تستطيع رؤية الصورة إذا كانت مرفقة. افحص الصورة بصرياً كصورة طبية أو دواء: 1) اقرأ أي نص/أرقام/اسم دواء ظاهر. 2) إذا كانت تحليل/فحص فرتب القيم المقروءة واشرح معناها العام وحدد القيم التي تحتاج مراجعة طبيب. 3) إذا كانت دواء فاذكر الاسم الظاهر أو الأقرب، المادة/الاستخدام العام إن أمكن، وتحذيرات السلامة. 4) إذا كانت غير واضحة اذكر ما استطعت قراءته فقط واطلب صورة أوضح. لا تخترع قيماً غير ظاهرة ولا تقدم تشخيصاً نهائياً.\n\n' : ''}'
         'سؤال المستخدم:\n$message';
   }
 
@@ -420,5 +419,5 @@ class MedicalAiApiService {
   }
 
   String get _systemPrompt =>
-      'أنت مساعد طبي عربي داخل تطبيق نبض. قدم إجابة منظمة وواضحة، نبه للحالات الطارئة، ولا تقدم تشخيصاً نهائياً أو وصفة دوائية خطرة.';
+      'أنت مساعد طبي عربي داخل تطبيق نبض. تستطيع تحليل الصور المرفقة بصرياً وقراءة النصوص الظاهرة في صور التحاليل والأدوية عندما تصل ضمن الطلب. قدم إجابة منظمة وواضحة، نبه للحالات الطارئة، ولا تقدم تشخيصاً نهائياً أو وصفة دوائية خطرة.';
 }
