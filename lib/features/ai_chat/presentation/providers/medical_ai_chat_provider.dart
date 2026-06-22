@@ -69,11 +69,19 @@ class MedicalAiChatProvider extends ChangeNotifier {
   }
 
   Future<void> sendAttachment(MedicalIntake intake, String path, String type) async {
-    final label = type == 'image' ? 'تم رفع صورة للتحليل' : 'تم رفع ملف للمراجعة';
+    final label = type == 'image'
+        ? 'تم رفع صورة للتحليل. حلل الصورة: إن كانت فحصاً أو تحليلاً فاستخرج القيم المقروءة واشرحها، وإن كانت دواءً فحاول تحديد اسمه واستخدامه والتحذيرات العامة.'
+        : 'تم رفع ملف للمراجعة';
     await _add(AiChatMessage(id: DateTime.now().microsecondsSinceEpoch.toString(), content: label, isUser: true, createdAt: DateTime.now(), attachmentPath: path, attachmentType: type));
     isLoading = true; error = null; notifyListeners();
     try {
-      final reply = await repository.sendMessage(intake, messages, '$label: $path');
+      final reply = await repository.sendMessage(
+        intake,
+        messages,
+        label,
+        attachmentPath: path,
+        attachmentType: type,
+      );
       await _addBot(reply.isEmpty ? 'تم استلام المرفق. صف لي ما تريد تحليله بالتحديد.' : reply);
     } catch (e) { error = 'تعذر تحليل المرفق: $e'; }
     finally { isLoading = false; notifyListeners(); }

@@ -250,7 +250,14 @@ class _MedicalAiChatScreenState extends State<MedicalAiChatScreen> {
             final f = await FilePicker.platform.pickFiles();
             final path = f?.files.single.path;
             if (path != null) {
-              await provider.sendAttachment(intake, path, 'file');
+              final lowerPath = path.toLowerCase();
+              final isImage = lowerPath.endsWith('.jpg') ||
+                  lowerPath.endsWith('.jpeg') ||
+                  lowerPath.endsWith('.png') ||
+                  lowerPath.endsWith('.webp') ||
+                  lowerPath.endsWith('.heic') ||
+                  lowerPath.endsWith('.heif');
+              await provider.sendAttachment(intake, path, isImage ? 'image' : 'file');
               _scrollToBottom();
             }
           },

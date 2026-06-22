@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -48,6 +49,8 @@ class MedicalAiApiService {
     required MedicalIntake intake,
     required List<AiChatMessage> history,
     required String message,
+    String? attachmentPath,
+    String? attachmentType,
   }) async {
     final configuredUrl = (baseUrl ?? '').trim();
     final key = (apiKey ?? '').trim();
@@ -63,6 +66,8 @@ class MedicalAiApiService {
         intake: intake,
         history: history,
         message: message,
+        attachmentPath: attachmentPath,
+        attachmentType: attachmentType,
       );
     }
 
@@ -75,6 +80,8 @@ class MedicalAiApiService {
         intake: intake,
         history: history,
         message: message,
+        attachmentPath: attachmentPath,
+        attachmentType: attachmentType,
       );
     }
 
@@ -84,6 +91,15 @@ class MedicalAiApiService {
 
     final geminiUrl =
         'https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent';
+    final promptText = _buildMedicalPrompt(intake, history, message, attachmentType);
+    final parts = <Map<String, dynamic>>[
+      {'text': promptText},
+    ];
+    final inlineImage = await _buildGeminiInlineImage(attachmentPath, attachmentType);
+    if (inlineImage != null) {
+      parts.add(inlineImage);
+    }
+
     final payload = {
       'systemInstruction': {
         'parts': [
@@ -93,25 +109,18 @@ class MedicalAiApiService {
       'contents': [
         {
           'role': 'user',
-          'parts': [
-            {
-              'text': 'بيانات الحالة:\n${intake.toPrompt()}\n\n'
-                  'سجل مختصر:\n${history.map((e) => '${e.isUser ? 'المستخدم' : 'المساعد'}: ${e.content}').join('\n')}\n\n'
-                  'سؤال المستخدم:\n$message',
-            }
-          ],
+          'parts': parts,
         }
       ],
       'generationConfig': {
-        'temperature': 0.4,
-        'maxOutputTokens': 900,
+        'temperature': 0.25,
+        'maxOutputTokens': 1200,
       },
     };
 
     try {
       _debug('Gemini Request URL: $geminiUrl');
       _debug('Gemini Request Model: $model');
-      _debug('Gemini Request Body: $payload');
 
       final response = await _dio.post(
         geminiUrl,
@@ -149,6 +158,8 @@ class MedicalAiApiService {
     required MedicalIntake intake,
     required List<AiChatMessage> history,
     required String message,
+    String? attachmentPath,
+    String? attachmentType,
   }) async {
     try {
       _debug('Medical AI Backend URL: $configuredUrl');
@@ -158,6 +169,8 @@ class MedicalAiApiService {
           'system': _systemPrompt,
           'intake': intake.toPrompt(),
           'message': message,
+          'attachmentType': attachmentType,
+          'attachmentPath': attachmentPath,
           'history': history.map((e) => e.toMap(firestore: false)).toList(),
         },
         options: Options(
@@ -189,27 +202,30 @@ class MedicalAiApiService {
     required MedicalIntake intake,
     required List<AiChatMessage> history,
     required String message,
+    String? attachmentPath,
+    String? attachmentType,
   }) async {
     const openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
+    final content = await _buildOpenRouterContent(
+      intake: intake,
+      history: history,
+      message: message,
+      attachmentPath: attachmentPath,
+      attachmentType: attachmentType,
+    );
     final payload = {
       'model': _openRouterModel,
       'messages': [
         {'role': 'system', 'content': _systemPrompt},
-        {
-          'role': 'user',
-          'content': 'بيانات الحالة:\n${intake.toPrompt()}\n\n'
-              'سجل مختصر:\n${history.map((e) => '${e.isUser ? 'المستخدم' : 'المساعد'}: ${e.content}').join('\n')}\n\n'
-              'سؤال المستخدم:\n$message',
-        },
+        {'role': 'user', 'content': content},
       ],
-      'temperature': 0.4,
-      'max_tokens': 900,
+      'temperature': 0.25,
+      'max_tokens': 1200,
     };
 
     try {
       _debug('OpenRouter Request URL: $openRouterUrl');
       _debug('OpenRouter Request Model: $_openRouterModel');
-      _debug('OpenRouter Request Body: $payload');
 
       final response = await _dio.post(
         openRouterUrl,
@@ -240,6 +256,68 @@ class MedicalAiApiService {
       _debug('OpenRouter Unknown Error: $e');
       return 'حدث خطأ غير متوقع أثناء الاتصال بـ OpenRouter: $e';
     }
+  }
+
+  String _buildMedicalPrompt(
+    MedicalIntake intake,
+    List<AiChatMessage> history,
+    String message,
+    String? attachmentType,
+  ) {
+    final hasImage = attachmentType == 'image';
+    return 'بيانات الحالة:\n${intake.toPrompt()}\n\n'
+        'سجل مختصر:\n${history.map((e) => '${e.isUser ? 'المستخدم' : 'المساعد'}: ${e.content}').join('\n')}\n\n'
+        '${hasImage ? 'الصورة المرفقة قد تكون صورة فحص/تحاليل/أشعة/دواء. حلل ما يظهر بصرياً فقط، واستخرج النصوص أو القيم المقروءة إن وجدت، واشرح ماذا قد تعني بشكل عام، واذكر متى يجب مراجعة طبيب أو صيدلي. لا تخترع قيماً غير واضحة ولا تقدم تشخيصاً نهائياً.\n\n' : ''}'
+        'سؤال المستخدم:\n$message';
+  }
+
+  Future<Map<String, dynamic>?> _buildGeminiInlineImage(
+    String? attachmentPath,
+    String? attachmentType,
+  ) async {
+    if (attachmentType != 'image' || attachmentPath == null || attachmentPath.trim().isEmpty) {
+      return null;
+    }
+    final file = File(attachmentPath);
+    if (!await file.exists()) return null;
+    final bytes = await file.readAsBytes();
+    return {
+      'inline_data': {
+        'mime_type': _mimeTypeForPath(attachmentPath),
+        'data': base64Encode(bytes),
+      },
+    };
+  }
+
+  Future<dynamic> _buildOpenRouterContent({
+    required MedicalIntake intake,
+    required List<AiChatMessage> history,
+    required String message,
+    String? attachmentPath,
+    String? attachmentType,
+  }) async {
+    final prompt = _buildMedicalPrompt(intake, history, message, attachmentType);
+    if (attachmentType != 'image' || attachmentPath == null || attachmentPath.trim().isEmpty) {
+      return prompt;
+    }
+    final file = File(attachmentPath);
+    if (!await file.exists()) return prompt;
+    final dataUri = 'data:${_mimeTypeForPath(attachmentPath)};base64,${base64Encode(await file.readAsBytes())}';
+    return [
+      {'type': 'text', 'text': prompt},
+      {
+        'type': 'image_url',
+        'image_url': {'url': dataUri},
+      },
+    ];
+  }
+
+  String _mimeTypeForPath(String path) {
+    final lower = path.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.heic') || lower.endsWith('.heif')) return 'image/heic';
+    return 'image/jpeg';
   }
 
   String _extractOpenRouterReply(dynamic data) {

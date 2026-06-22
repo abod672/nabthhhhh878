@@ -27,8 +27,20 @@ class MedicalAiRepository {
     );
   }
 
-  Future<String> sendMessage(MedicalIntake intake, List<AiChatMessage> history, String message) =>
-      apiService.sendMedicalMessage(intake: intake, history: history, message: message);
+  Future<String> sendMessage(
+    MedicalIntake intake,
+    List<AiChatMessage> history,
+    String message, {
+    String? attachmentPath,
+    String? attachmentType,
+  }) =>
+      apiService.sendMedicalMessage(
+        intake: intake,
+        history: history,
+        message: message,
+        attachmentPath: attachmentPath,
+        attachmentType: attachmentType,
+      );
 
   String get _historyKey {
     final uid = auth.currentUser?.uid;
