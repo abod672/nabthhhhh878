@@ -11,6 +11,7 @@ import '../../../../services/health_News_Service.dart';
 import '../../../../services/internet_checker_service.dart';
 import '../../../../services/medication_service.dart';
 import '../../../appointments/presentation/pages/appointments_list_screen.dart';
+import '../../../ai_chat/presentation/providers/medical_ai_chat_provider.dart';
 import '../../../appointments/presentation/pages/book_appointment_screen.dart';
 import '../../../doctor/presentation/doctorsListWidget.dart';
 import '../../../healthNews/medical_news_widget.dart';
@@ -309,14 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       extendBody: true,
       floatingActionButton: currentUserModel!.isPatient
-          ? FloatingActionButton.extended(
-              heroTag: 'global_ai_chat_fab',
-              elevation: 0,
-              highlightElevation: 0,
-              onPressed: () => Navigator.of(context).pushNamed('/medical_ai_chat'),
-              icon: const Icon(Icons.smart_toy_rounded),
-              label: const Text('مساعد AI'),
-            )
+          ? MedicalAiChatProvider.floatingButton(context)
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: ModernBottomNavBar(

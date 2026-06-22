@@ -139,22 +139,22 @@ class DoctorProfileScreen extends StatelessWidget {
     final imageUrl = user.photoURL;
     final workplaces = user.workplaces;
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(user.fullName),
         centerTitle: true,
-        backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
-        foregroundColor: Colors.blue,
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.primary,
         elevation: 1,
-        iconTheme: const IconThemeData(color: Colors.blue),
+        iconTheme: IconThemeData(color: colorScheme.primary),
       ),
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
-          Container(color: Theme.of(context).colorScheme.background),
+          Container(color: colorScheme.surface),
           SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -170,21 +170,14 @@ class DoctorProfileScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   user.fullName,
-                  style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(0, 1),
-                        blurRadius: 2,
-                        color: Colors.black54,
-                      ),
-                    ],
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   user.displaySpecialty,
-                  style: const TextStyle(fontSize: 18),
+                  style: theme.textTheme.titleMedium?.copyWith(color: colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -195,14 +188,14 @@ class DoctorProfileScreen extends StatelessWidget {
                           ? Icons.circle
                           : Icons.circle_outlined,
                       color: user.isOnline == true
-                          ? Colors.greenAccent
-                          : Colors.grey,
+                          ? colorScheme.tertiary
+                          : colorScheme.outline,
                       size: 12,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       user.isOnline == true ? 'متصل الآن' : 'غير متصل',
-                      style: const TextStyle(),
+                      style: TextStyle(color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -223,6 +216,7 @@ class DoctorProfileScreen extends StatelessWidget {
                     snapshot.data!.data() as Map<String, dynamic>;
 
                     return _buildGlassInfoCardFromLiveData(
+                      context: context,
                       rating: (data['rating'] ?? 0).toDouble(),
                       consultationCount:
                       (data['consultationCount'] ?? 0).toInt(),
@@ -268,8 +262,8 @@ class DoctorProfileScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -291,8 +285,8 @@ class DoctorProfileScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orangeAccent,
-              foregroundColor: Colors.black,
+              backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+              foregroundColor: Theme.of(context).colorScheme.onTertiaryContainer,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -306,12 +300,14 @@ class DoctorProfileScreen extends StatelessWidget {
   }
 
   Widget _buildGlassInfoCardFromLiveData({
+    required BuildContext context,
     required double rating,
     required int consultationCount,
     String? licenseNumber,
     String? phone,
     required bool isAvailable,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -320,41 +316,41 @@ class DoctorProfileScreen extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.4),
+            color: colorScheme.primaryContainer.withValues(alpha: 0.42),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white30),
+            border: Border.all(color: colorScheme.outlineVariant),
           ),
           child: Column(
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInfoRow(
+                  _buildInfoRow(context,
                       Icons.star, 'التقييم', '${rating.toStringAsFixed(1)} / 5'),
                   const SizedBox(height: 4),
                   RatingBarIndicator(
                     rating: rating,
                     itemBuilder: (context, _) =>
-                    const Icon(Icons.star, color: Colors.amber),
+                    Icon(Icons.star, color: colorScheme.tertiary),
                     itemCount: 5,
                     itemSize: 24,
-                    unratedColor: Colors.grey[300],
+                    unratedColor: colorScheme.outlineVariant,
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              _buildInfoRow(Icons.chat, 'عدد الاستشارات', '$consultationCount'),
+              _buildInfoRow(context, Icons.chat, 'عدد الاستشارات', '$consultationCount'),
               if (licenseNumber != null) ...[
                 const SizedBox(height: 10),
-                _buildInfoRow(
+                _buildInfoRow(context,
                     Icons.verified_user, 'رقم الترخيص', licenseNumber),
               ],
               if (phone != null) ...[
                 const SizedBox(height: 10),
-                _buildInfoRow(Icons.phone, 'رقم الهاتف', phone),
+                _buildInfoRow(context, Icons.phone, 'رقم الهاتف', phone),
               ],
               const SizedBox(height: 10),
-              _buildInfoRow(
+              _buildInfoRow(context,
                 isAvailable ? Icons.check_circle : Icons.cancel,
                 'الحالة',
                 isAvailable ? 'متاح للاستشارة' : 'غير متاح حالياً',
@@ -366,15 +362,16 @@ class DoctorProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String label, String value) {
+  Widget _buildInfoRow(BuildContext context, IconData icon, String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(icon, color: Colors.blue[900], size: 20),
+        Icon(icon, color: colorScheme.primary, size: 20),
         const SizedBox(width: 8),
         Text(
           '$label:',
-          style: const TextStyle(
-              color: Colors.black54,
+          style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
               fontSize: 16,
               fontWeight: FontWeight.w500),
         ),
@@ -382,7 +379,7 @@ class DoctorProfileScreen extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(color: Colors.black, fontSize: 16),
+            style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -392,20 +389,20 @@ class DoctorProfileScreen extends StatelessWidget {
 
   Widget _buildWorkplaceCard(Workplace workplace, BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final colorScheme = theme.colorScheme;
 
     return Card(
-      color: isDarkMode ? Colors.grey[800] : Colors.white.withOpacity(0.9),
+      color: colorScheme.surfaceContainerHighest,
       elevation: 3,
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: ListTile(
-        leading: const Icon(Icons.location_on, color: Colors.blueAccent),
+        leading: Icon(Icons.location_on, color: colorScheme.primary),
         title:
-        Text(workplace.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+        Text(workplace.name, style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface)),
         subtitle: Text(
           workplace.formattedWorkingHours,
-          style: const TextStyle(fontSize: 14),
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -424,9 +421,11 @@ class DoctorProfileScreen extends StatelessWidget {
 
     showDialog(
       context: parentContext,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('قيّم الطبيب'),
-        content: StatefulBuilder(
+      builder: (dialogContext) {
+        final colorScheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          title: const Text('قيّم الطبيب'),
+          content: StatefulBuilder(
           builder: (context, setState) => Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -435,9 +434,9 @@ class DoctorProfileScreen extends StatelessWidget {
                 minRating: 1,
                 allowHalfRating: true,
                 itemCount: 5,
-                unratedColor: Colors.grey[300],
+                unratedColor: colorScheme.outlineVariant,
                 itemBuilder: (context, _) =>
-                const Icon(Icons.star, color: Colors.amber),
+                Icon(Icons.star, color: colorScheme.tertiary),
                 onRatingUpdate: (rating) => setState(() => _currentRating = rating),
               ),
               const SizedBox(height: 12),
@@ -445,7 +444,7 @@ class DoctorProfileScreen extends StatelessWidget {
             ],
           ),
         ),
-        actions: [
+          actions: [
           TextButton(
               onPressed: () => Navigator.pop(dialogContext),
               child: const Text('إلغاء')),
@@ -466,7 +465,8 @@ class DoctorProfileScreen extends StatelessWidget {
             child: const Text('إرسال'),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 }
